@@ -1,50 +1,57 @@
 import { Component } from "react";
 import BookList from "./BookList";
 import BookDetail from "./BookDetail";
-import { Col, Row } from "react-bootstrap";
+import { Col, Row, Toast } from "react-bootstrap";
+import { connect } from "react-redux";
+import { getBooksAction } from "../actions";
+
+const mapStateToProps = state => state
+
+const mapDispatchToProps = (dispatch) => ({
+  getBooks: (value) => dispatch(getBooksAction(value))
+})
 
 class BookStore extends Component {
   state = {
-    books: [],
     bookSelected: null,
   };
 
   componentDidMount = async () => {
-    try {
-      let resp = await fetch(
-        "https://striveschool-api.herokuapp.com/food-books"
-      );
-      if (resp.ok) {
-        let books = await resp.json();
-        this.setState({ books });
-      } else {
-        console.log("error");
-      }
-    } catch (error) {
-      console.log(error);
-    }
+    this.props.getBooks(true)
   };
 
   changeBook = (book) => this.setState({ bookSelected: book });
 
   render() {
     return (
-      <Row>
-        <Col md={4}>
-          <BookList
-            bookSelected={this.state.bookSelected}
-            changeBook={this.changeBook}
-            books={this.state.books}
-          />
-        </Col>
-        <Col md={8}>
-          <BookDetail
-            bookSelected={this.state.bookSelected}
-          />
-        </Col>
-      </Row>
+      <>
+        {!this.props.books.error ?
+          <Row>
+            <Col md={4}>
+              <BookList
+                bookSelected={this.state.bookSelected}
+                changeBook={this.changeBook}
+                books={this.props.books.stock}
+              />
+            </Col>
+            <Col md={8}>
+              <BookDetail
+                bookSelected={this.state.bookSelected}
+              />
+            </Col>
+          </Row> :
+          <Toast style={{ position: 'absolute', top: '10px', right: '10px' }}>
+            <Toast.Header>
+              <img src="http://placehold.it/20x20" className="rounded mr-2" alt="" />
+              <strong className="mr-auto">ERRRORRRR</strong>
+              <small>right now</small>
+            </Toast.Header>
+            <Toast.Body>We encountered an error fetching the books</Toast.Body>
+          </Toast>
+        }
+      </>
     );
   }
 }
 
-export default BookStore;
+export default connect(mapStateToProps, mapDispatchToProps)(BookStore);
